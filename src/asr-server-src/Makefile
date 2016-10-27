@@ -1,8 +1,7 @@
 
 all:
 
-include ../apiai.mk
-include $(KALDI_PATH)/kaldi.mk
+include ../kaldi.mk
 
 LDFLAGS += $(CUDA_LDFLAGS)
 LDLIBS += -lfcgi -lfcgi++ $(CUDA_LDLIBS)
@@ -16,12 +15,12 @@ BINFILES = fcgi-nnet3-decoder
 
 TESTFILES = QueryStringParserTests
 
-ADDLIBS = $(KALDI_PATH)/online2/kaldi-online2.a $(KALDI_PATH)/ivector/kaldi-ivector.a \
-          $(KALDI_PATH)/nnet2/kaldi-nnet2.a $(KALDI_PATH)/nnet3/kaldi-nnet3.a $(KALDI_PATH)/lat/kaldi-lat.a \
-          $(KALDI_PATH)/decoder/kaldi-decoder.a  $(KALDI_PATH)/cudamatrix/kaldi-cudamatrix.a \
-          $(KALDI_PATH)/feat/kaldi-feat.a $(KALDI_PATH)/transform/kaldi-transform.a $(KALDI_PATH)/gmm/kaldi-gmm.a \
-          $(KALDI_PATH)/thread/kaldi-thread.a $(KALDI_PATH)/hmm/kaldi-hmm.a $(KALDI_PATH)/tree/kaldi-tree.a \
-          $(KALDI_PATH)/matrix/kaldi-matrix.a $(KALDI_PATH)/fstext/kaldi-fstext.a \
-          $(KALDI_PATH)/util/kaldi-util.a $(KALDI_PATH)/base/kaldi-base.a 
+ADDLIBS = ../online2/kaldi-online2.a ../ivector/kaldi-ivector.a \
+          ../nnet2/kaldi-nnet2.a ../nnet3/kaldi-nnet3.a ../lat/kaldi-lat.a \
+          ../decoder/kaldi-decoder.a  ../cudamatrix/kaldi-cudamatrix.a \
+          ../feat/kaldi-feat.a ../transform/kaldi-transform.a ../gmm/kaldi-gmm.a \
+          ../thread/kaldi-thread.a ../hmm/kaldi-hmm.a ../tree/kaldi-tree.a \
+          ../matrix/kaldi-matrix.a ../fstext/kaldi-fstext.a \
+          ../util/kaldi-util.a ../base/kaldi-base.a 
           
-include $(KALDI_PATH)/makefiles/default_rules.mk
+include ../makefiles/default_rules.mk
