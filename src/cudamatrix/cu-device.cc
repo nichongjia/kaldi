@@ -571,6 +571,9 @@ CuDevice::CuDevice() :
 CuDevice::~CuDevice() {
   if (Enabled()) {
     cublasDestroy(handle_);
+  #if HAVE_CUDNN == 1
+    cudnnDestroy(cudnn_);
+  #endif
     cudaDeviceReset();
   }
 }
