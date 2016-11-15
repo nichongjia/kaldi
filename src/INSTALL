@@ -18,3 +18,15 @@ in parallel if you have multiple CPUs, for instance
 For more information, see documentation at http://kaldi-asr.org/doc/
 and click on "The build process (how Kaldi is compiled)".
 
+
+-----------------------------------------------------------------------
+
+Install libfcgi-dev
+sudo apt-get install libfcgi-dev
+
+
+-----------------------------------------------------------------------
+
+
+
+
