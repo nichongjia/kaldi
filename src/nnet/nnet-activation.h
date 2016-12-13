@@ -205,8 +205,123 @@ class BlockSoftmax : public Component {
   std::vector<int32> block_offset;
 };
 
+class Normalize : public Component {
+ public:
+  Normalize(int32 dim_in, int32 dim_out) 
+    : Component(dim_in, dim_out)
+  {kNormFloor = pow(2.0, -66); }
+  ~Normalize()
+  { }
 
+  Component* Copy() const { return new Normalize(*this); }
+  ComponentType GetType() const { return kNormalize; }
 
+  void PropagateFnc(const CuMatrixBase<BaseFloat> &in, CuMatrixBase<BaseFloat> *out) {
+    // This component modifies the vector of activations by scaling it so that the
+    // root-mean-square equals 1.0.
+    out->CopyFromMat(in);
+    CuVector<BaseFloat> in_norm(in.NumRows());
+    in_norm.AddDiagMat2(1.0 / in.NumCols(), in, kNoTrans, 0.0);
+    in_norm.ApplyFloor(kNormFloor);
+    in_norm.ApplyPow(-0.5);
+    out->MulRowsVec(in_norm);
+  }
+
+  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in, const CuMatrixBase<BaseFloat> &out,
+                        const CuMatrixBase<BaseFloat> &out_diff, CuMatrixBase<BaseFloat> *in_diff) {
+    // 
+    CuVector<BaseFloat> in_norm(in.NumRows());
+    in_norm.AddDiagMat2(1.0 / in.NumCols(), in, kNoTrans, 0.0);
+    in_norm.ApplyFloor(kNormFloor);
+    in_norm.ApplyPow(-0.5);
+    in_diff->AddDiagVecMat(1.0, in_norm, out_diff, kNoTrans, 0.0);
+    in_norm.ReplaceValue(1.0 / sqrt(kNormFloor), 0.0);
+    in_norm.ApplyPow(3.0);
+    CuVector<BaseFloat> dot_prod(in_diff->NumRows());
+    dot_prod.AddDiagMatMat(1.0, out_diff, kNoTrans, in, kTrans, 0.0);
+    dot_prod.MulElements(in_norm);
+    in_diff->AddDiagVecMat(-1.0 / in.NumCols(), dot_prod, in, kNoTrans, 1.0);
+  }
+
+  BaseFloat kNormFloor;
+};
+
+class Maxout : public Component {
+ public:
+  Maxout(int32 dim_in, int32 dim_out) 
+    : Component(dim_in, dim_out)
+  { }
+  ~Maxout()
+  { }
+
+  Component* Copy() const { return new Maxout(*this); }
+  ComponentType GetType() const { return kMaxout; }
+
+  void PropagateFnc(const CuMatrixBase<BaseFloat> &in, CuMatrixBase<BaseFloat> *out) {
+    // y = max(x)
+    out->GroupMax(in);
+  }
+
+  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in, const CuMatrixBase<BaseFloat> &out,
+                        const CuMatrixBase<BaseFloat> &out_diff, CuMatrixBase<BaseFloat> *in_diff) {
+    // ey = y(1-y)ex
+    in_diff->GroupMaxDeriv(in, out);
+    in_diff->MulRowsGroupMat(out_diff);
+  }
+};
+
+class Pnorm : public Component {
+ public:
+  Pnorm(int32 dim_in, int32 dim_out) 
+    : Component(dim_in, dim_out), p_(2.0)
+  { }
+  ~Pnorm()
+  { }
+
+  Component* Copy() const { return new Pnorm(*this); }
+  ComponentType GetType() const { return kPnorm; }
+
+  void InitData(std::istream &is) {
+    is >> std::ws; // eat-up whitespace
+    // parse config
+    std::string token;
+    while (!is.eof()) {
+      ReadToken(is, false, &token); 
+      if (token == "<P>") ReadBasicType(is, false, &p_);
+      else KALDI_ERR << "Unknown token " << token << ", a typo in config?"
+                     << " (P)";
+    }
+    KALDI_ASSERT(p_ >= 1.0);
+  }
+
+  void ReadData(std::istream &is, bool binary) {
+    if ('<' == Peek(is, binary)) {
+      ExpectToken(is, binary, "<P>");
+      ReadBasicType(is, binary, &p_);
+    }
+    // check
+    KALDI_ASSERT(p_ >= 1.0);
+  }
+
+  void WriteData(std::ostream &os, bool binary) const {
+    WriteToken(os, binary, "<P>");
+    WriteBasicType(os, binary, p_);
+  }
+
+  void PropagateFnc(const CuMatrixBase<BaseFloat> &in, CuMatrixBase<BaseFloat> *out) {
+    // y = (sum(|x^2|))^(1/p)
+    out->GroupPnorm(in, p_);
+  }
+
+  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in, const CuMatrixBase<BaseFloat> &out,
+                        const CuMatrixBase<BaseFloat> &out_diff, CuMatrixBase<BaseFloat> *in_diff) {
+    // ey = y(1-y)ex
+    in_diff->GroupPnormDeriv(in, out, p_);
+    in_diff->MulRowsGroupMat(out_diff);
+  }
+ private:
+  BaseFloat p_;
+};
 
 class Sigmoid : public Component {
  public:
@@ -235,7 +350,55 @@ class Sigmoid : public Component {
   }
 };
 
+class ReLU : public Component {
+ public:
+  ReLU(int32 dim_in, int32 dim_out) 
+    : Component(dim_in, dim_out)
+  { }
+  ~ReLU()
+  { }
 
+  Component* Copy() const { return new ReLU(*this); }
+  ComponentType GetType() const { return kReLU; }
+
+  void PropagateFnc(const CuMatrixBase<BaseFloat> &in, CuMatrixBase<BaseFloat> *out) {
+    // y = max(x, 0)
+    out->CopyFromMat(in);
+    out->ApplyFloor(0.0);
+  }
+
+  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in, const CuMatrixBase<BaseFloat> &out,
+                        const CuMatrixBase<BaseFloat> &out_diff, CuMatrixBase<BaseFloat> *in_diff) {
+    // ey = (y > 0.0 ? 1.0 : 0.0)ex
+    in_diff->CopyFromMat(out);
+    in_diff->ApplyHeaviside();
+    in_diff->MulElements(out_diff);
+  }
+};
+
+class SoftHinge : public Component {
+ public:
+  SoftHinge(int32 dim_in, int32 dim_out) 
+    : Component(dim_in, dim_out)
+  { }
+  ~SoftHinge()
+  { }
+
+  Component* Copy() const { return new SoftHinge(*this); }
+  ComponentType GetType() const { return kSoftHinge; }
+
+  void PropagateFnc(const CuMatrixBase<BaseFloat> &in, CuMatrixBase<BaseFloat> *out) {
+    // y = log(1+e^x)
+    out->SoftHinge(in);
+  }
+
+  void BackpropagateFnc(const CuMatrixBase<BaseFloat> &in, const CuMatrixBase<BaseFloat> &out,
+                        const CuMatrixBase<BaseFloat> &out_diff, CuMatrixBase<BaseFloat> *in_diff) {
+    // ey = y(1-y)ex
+    in_diff->Sigmoid(in);
+    in_diff->MulElements(out_diff);
+  }
+};
 
 class Tanh : public Component {
  public:

@@ -66,6 +66,11 @@ const struct Component::key_value Component::kMarkerMap[] = {
   { Component::kHiddenSoftmax, "<HiddenSoftmax>" },
   { Component::kBlockSoftmax, "<BlockSoftmax>" },
   { Component::kSigmoid, "<Sigmoid>" },
+  { Component::kReLU,"<ReLU>" },
+  { Component::kSoftHinge,"<SoftHinge>" },
+  { Component::kNormalize,"<Normalize>" },
+  { Component::kMaxout,"<Maxout>" },
+  { Component::kPnorm,"<Pnorm>" },
   { Component::kTanh, "<Tanh>" },
   { Component::kParametricRelu,"<ParametricRelu>" },
   { Component::kDropout, "<Dropout>" },
@@ -150,6 +155,21 @@ Component* Component::NewComponentOfType(ComponentType comp_type,
       break;
     case Component::kSigmoid :
       ans = new Sigmoid(input_dim, output_dim);
+      break;
+    case Component::kReLU :
+      ans = new ReLU(input_dim, output_dim);
+      break;
+    case Component::kSoftHinge :
+      ans = new SoftHinge(input_dim, output_dim);
+      break;
+    case Component::kNormalize :
+      ans = new Normalize(input_dim, output_dim);
+      break;
+    case Component::kMaxout :
+      ans = new Maxout(input_dim, output_dim);
+      break;
+    case Component::kPnorm :
+      ans = new Pnorm(input_dim, output_dim);
       break;
     case Component::kTanh :
       ans = new Tanh(input_dim, output_dim);

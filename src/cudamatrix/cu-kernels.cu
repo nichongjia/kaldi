@@ -56,6 +56,85 @@ static Real _sum_reduce(Real buffer[]) {
   return buffer[0];
 }
 
+
+template<typename Real>
+__device__
+static Real _min_reduce(Real buffer[]) {
+  // Total number of active threads
+  int32_cuda nTotalThreads = blockDim.x;
+  __syncthreads();
+  // perform tree-based reduction (min)
+  while(nTotalThreads > 1) {
+    int32_cuda halfPoint = ((1+nTotalThreads) >> 1); // divide by two
+    // only the first half of the threads will be active
+    if (threadIdx.x < halfPoint) {
+      if (threadIdx.x + halfPoint < nTotalThreads) {
+        Real temp = buffer[threadIdx.x + halfPoint];
+        if (temp < buffer[threadIdx.x]) 
+           buffer[threadIdx.x] = temp;
+      }
+    }
+    __syncthreads();
+    nTotalThreads = ((1+nTotalThreads) >> 1); // divide by two
+  }
+  // the result
+  return buffer[0];
+}
+
+
+template<typename Real>
+__device__
+static Real _max_reduce(Real buffer[]) {
+  // Total number of active threads
+  int32_cuda nTotalThreads = blockDim.x;	
+  __syncthreads();
+  // perform tree-based reduction (max)
+  while(nTotalThreads > 1) {
+    int32_cuda halfPoint = ((1+nTotalThreads) >> 1);	// divide by two
+    // only the first half of the threads will be active.
+    if (threadIdx.x < halfPoint)  {
+      // Get the shared value stored by another thread
+      if(threadIdx.x+halfPoint < nTotalThreads) {
+        Real temp = buffer[threadIdx.x + halfPoint];
+        if (temp > buffer[threadIdx.x]) 
+          buffer[threadIdx.x] = temp;
+      }
+    }
+    __syncthreads();
+    nTotalThreads = ((1+nTotalThreads) >> 1);	// divide by two.
+  }
+  // the result
+  return buffer[0];
+}
+
+
+
+template<typename Real>
+__device__
+static int32_cuda _max_id_reduce(Real val[], int32_cuda idx[]) {
+  // Total number of active threads
+  int32_cuda nTotalThreads = blockDim.x;	
+  __syncthreads();
+  // perform tree-based reduction (get index of maximum)
+  while(nTotalThreads > 1) {
+    int32_cuda halfPoint = ((1+nTotalThreads) >> 1);	// divide by two
+    // only the first half of the threads will be active.
+    if (threadIdx.x < halfPoint)  {
+      // Get the shared value stored by another thread
+      Real temp = -1e20;
+      if(threadIdx.x+halfPoint < nTotalThreads) {
+        temp = val[idx[threadIdx.x + halfPoint]];
+      }
+      if (temp > val[idx[threadIdx.x]]) idx[threadIdx.x]=idx[threadIdx.x + halfPoint];
+    }
+    __syncthreads();
+    nTotalThreads = ((1+nTotalThreads) >> 1);	// divide by two.
+  }
+  // the result
+  return idx[0];
+}
+
+
 /***********************************************************************
  * CUDA kernels
  * the functions are templated to have the float/double operations
