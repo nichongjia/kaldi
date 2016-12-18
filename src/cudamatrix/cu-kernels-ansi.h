@@ -111,6 +111,9 @@ void cudaF_mul_rows_vec(dim3 Gr, dim3 Bl, float *mat, const float *scale,
                         MatrixDim d);
 void cudaF_mul_rows_group_mat(dim3 Gr, dim3 Bl, float *y, const float *x,
                               MatrixDim d, int src_stride, int group_size);
+
+void cudaF_calc_pnorm_deriv(dim3 Gr, dim3 Bl, float *y, const float *x1, const float *x2,  MatrixDim d, int src_stride, int group_size, float power);
+
 void cudaF_diff_group_pnorm(dim3 Gr, dim3 Bl, float *id, const float *iv,
                             const float *ov, const float* od, MatrixDim id_dim,
                             int iv_stride, int ov_stride, int od_stride,
@@ -408,6 +411,7 @@ void cudaD_add_mat_mat_elements(dim3 Gr, dim3 Bl, double *data,
                                 const double *srcB_data, MatrixDim dim,
                                 int srcA_stride, int srcB_stride, double alpha,
                                 double beta);
+void cudaD_calc_pnorm_deriv(dim3 Gr, dim3 Bl, double *y, const double *x1, const double *x2,  MatrixDim d, int src_stride, int group_size, double power);
 
 /*
  * CuVector

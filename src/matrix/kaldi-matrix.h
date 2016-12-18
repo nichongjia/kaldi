@@ -469,7 +469,6 @@ class MatrixBase {
   /// Apply the function y(i) = (sum_{j = i*G}^{(i+1)*G-1} x_j^(power))^(1 / p).
   /// Requires src.NumRows() == this->NumRows() and  src.NumCols() % this->NumCols() == 0.
   void GroupPnorm(const MatrixBase<Real> &src, Real power);
-  void GroupMax(const MatrixBase<Real> &src);
   /// Calculate derivatives for the GroupPnorm function above...
   /// if "input" is the input to the GroupPnorm function above (i.e. the "src" variable),
   /// and "output" is the result of the computation (i.e. the "this" of that function

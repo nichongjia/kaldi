@@ -2445,6 +2445,28 @@ static void _vec_copy_diag_from_packed(Real* y, const Real* x, int dim) {
   }
 }
 
+/// y is the derivative we will output; vec is the input we're computing
+/// the group p-norm on, "norm" is the previously computed group p-norm.
+template<typename Real>
+__global__
+static void _calc_pnorm_deriv(Real *deriv, const Real *vec, const Real *norm,
+        MatrixDim d, int src_stride, int group_size, Real power) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int j = blockIdx.y * blockDim.y + threadIdx.y;
+  if (j < d.rows  && i < d.cols ) {  
+    int dst_index = i + j * d.stride,
+        src_index = i / group_size + j * src_stride;
+    Real vec_element = vec[dst_index], // this is the element of the original vector.
+         norm_element = norm[src_index]; // this is the pnorm
+    Real vec_element_sign = (vec_element > 0 ? 1 : -1);
+    Real ans;
+    if (norm_element <= 0.0) ans = 0.0; // The derivative is either zero or undefined at the origin.
+    else ans = vec_element_sign * pow(std::abs(vec_element), power - 1) *
+             pow(norm_element, 1 - power);
+    deriv[dst_index] = ans;
+  }
+}
+
 template<typename Real>
 __global__
 static void _copy_from_sp(const Real* x, Real* y, MatrixDim dim) {
@@ -3181,6 +3203,12 @@ void cudaF_group_pnorm(dim3 Gr, dim3 Bl, float *y, const float *x, MatrixDim d,
   _group_pnorm<<<Gr,Bl>>>(y, x, d, src_stride, group_size, power);
 }
 
+void cudaF_calc_pnorm_deriv(dim3 Gr, dim3 Bl, float *y, const float *x1, 
+			    const float *x2, MatrixDim d, int src_stride,
+			    int group_size, float power) {
+  _calc_pnorm_deriv<<<Gr,Bl>>>(y, x1, x2, d, src_stride, group_size, power);
+}
+
 void cudaF_group_spec_pnorm(dim3 Gr, dim3 Bl, float* y, const float* x,
                             MatrixDim d, int src_stride, int group_size,
                             float power) {
@@ -3799,6 +3827,12 @@ void cudaD_block_add_mat_mat(dim3 Gr, dim3 Bl, CuBlockMatrixData *B_cu_data,
   _block_add_mat_mat<<<Gr,Bl>>>(B_cu_data, num_blocks, C_data, C_num_cols,
       C_row_stride, C_col_stride, D_data, D_row_stride, D_col_stride,
       alpha, beta);
+}
+
+void cudaD_calc_pnorm_deriv(dim3 Gr, dim3 Bl, double*y, const double* x1, 
+			    const double* x2, MatrixDim d, int src_stride, 
+			    int group_size, double power) {
+  _calc_pnorm_deriv<<<Gr,Bl>>>(y, x1, x2, d, src_stride, group_size, power);
 }
 
 /*

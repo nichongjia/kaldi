@@ -311,6 +311,8 @@ inline void cuda_mul_rows_group_mat(dim3 Gr, dim3 Bl, float *y, const float *x,
   cudaF_mul_rows_group_mat(Gr, Bl, y, x, d, src_stride, group_size);
 }
 
+inline void cuda_calc_pnorm_deriv(dim3 Gr, dim3 Bl, float *y, const float *x1, const float *x2,  MatrixDim d, int src_stride, int group_size, float power) {cudaF_calc_pnorm_deriv(Gr, Bl, y, x1, x2, d, src_stride, group_size, power); }
+
 inline void cuda_diff_group_pnorm(dim3 Gr, dim3 Bl, float *id, const float *iv,
                                   const float *ov, const float* od,
                                   MatrixDim id_dim, int iv_stride,
@@ -719,6 +721,9 @@ inline void cuda_copy_from_tp(dim3 Gr, dim3 Bl, double* A, const float* B,
                               MatrixDim dmat) {
   cudaDF_copy_from_tp(Gr, Bl, A, B, dmat);
 }
+
+inline void cuda_calc_pnorm_deriv(dim3 Gr, dim3 Bl, double *y, const double *x1, const double *x2,  MatrixDim d, int src_stride, int group_size, double power) {cudaD_calc_pnorm_deriv(Gr, Bl, y, x1, x2, d, src_stride, group_size, power); }
+
 inline void cuda_apply_exp(dim3 Gr, dim3 Bl, double* mat, MatrixDim d) {
   cudaD_apply_exp(Gr, Bl, mat, d);
 }
