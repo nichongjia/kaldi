@@ -19,7 +19,6 @@
 // limitations under the License.
 
 #include "online2/online-nnet3-decoding-threaded.h"
-#include "nnet2/nnet-compute-online.h"
 #include "lat/lattice-functions.h"
 #include "lat/determinize-lattice-pruned.h"
 #include "thread/kaldi-thread.h"

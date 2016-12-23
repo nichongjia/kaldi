@@ -31,7 +31,6 @@
 #include "util/common-utils.h"
 #include "base/kaldi-error.h"
 #include "decoder/decodable-matrix.h"
-#include "nnet2/am-nnet.h"
 #include "online2/online-nnet2-feature-pipeline.h"
 #include "online2/online-endpoint.h"
 #include "decoder/lattice-faster-online-decoder.h"
