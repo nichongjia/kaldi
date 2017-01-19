@@ -252,17 +252,8 @@ void NnetOnlineComputer::Forward() {
 
   for (; i < size && c[i].command_type != kNoOperationMarker;
        i++) {
-    if (debug_)
-      DebugBeforeExecute(i, &info);
     ExecuteCommand(i);
-    if (debug_) {
-      double total_elapsed_now = timer.Elapsed();
-      DebugAfterExecute(i, info, total_elapsed_now - total_elapsed_previous);
-      total_elapsed_previous = total_elapsed_now;
-    }
-
   }
-
 }
 
 void NnetOnlineComputer::AcceptInput(const std::string &input_name,

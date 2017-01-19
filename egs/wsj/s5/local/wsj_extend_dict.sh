@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # This script builds a larger word-list and dictionary
 # than used for the LMs supplied with the WSJ corpus.
@@ -50,6 +50,11 @@ mincount=2 # Minimum count of an OOV we will try to generate a pron for.
 # include these markers.
 grep -v ';;;' data/local/dict${dict_suffix}/cmudict/cmudict.0.7a |
  perl -ane 's/^(\S+)\(\d+\)/$1/; print; ' | sort | uniq > $dir/dict.cmu
+
+# For word classes: some compounds from the word class "US_STATE" like
+# "WEST-VIRGINIA" were not in the lexicon. I add them here ...
+cat $dir/dict.cmu local/wclass/resources/wsj_classes_lexicon.txt | sort | uniq > $dir/dict.cmu_tmp
+mv $dir/dict.cmu_tmp $dir/dict.cmu
 
 cat $dir/dict.cmu | awk '{print $1}' | sort | uniq > $dir/wordlist.cmu
 
