@@ -197,7 +197,7 @@ class SingleUtteranceNnet3DecoderThreaded {
   SingleUtteranceNnet3DecoderThreaded(
       const OnlineNnet3DecodingThreadedConfig &config,
       const TransitionModel &tmodel,
-      const nnet3::AmNnet &am_nnet,
+      const nnet3::AmNnetSimple &am_nnet,
       const fst::Fst<fst::StdArc> &fst,
       const OnlineNnet2FeaturePipelineInfo &feature_info);
 
@@ -343,7 +343,7 @@ class SingleUtteranceNnet3DecoderThreaded {
   
   OnlineNnet3DecodingThreadedConfig config_;
 
-  const nnet3::AmNnet &am_nnet_;
+  const nnet3::AmNnetSimple &am_nnet_;
   
   const TransitionModel &tmodel_;
 

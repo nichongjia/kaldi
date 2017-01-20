@@ -22,6 +22,7 @@
 #include "lat/lattice-functions.h"
 #include "lat/determinize-lattice-pruned.h"
 #include "thread/kaldi-thread.h"
+#include "nnet3/nnet-compute-online.h"
 
 namespace kaldi {
 
@@ -112,7 +113,7 @@ void OnlineNnet3DecodingThreadedConfig::Check() {
 SingleUtteranceNnet3DecoderThreaded::SingleUtteranceNnet3DecoderThreaded(
     const OnlineNnet3DecodingThreadedConfig &config,
     const TransitionModel &tmodel,
-    const nnet3::AmNnet &am_nnet,
+    const nnet3::AmNnetSimple &am_nnet,
     const fst::Fst<fst::StdArc> &fst,
     const OnlineNnet2FeaturePipelineInfo &feature_info):
   config_(config), am_nnet_(am_nnet), tmodel_(tmodel), sampling_rate_(0.0),
@@ -503,8 +504,8 @@ bool SingleUtteranceNnet3DecoderThreaded::RunNnetEvaluationInternal() {
   
   // This object is responsible for keeping track of the context, and avoiding
   // re-computing things we've already computed.
-  bool pad_input = true;
-  nnet2::NnetOnlineComputer computer(am_nnet_.GetNnet(), pad_input);
+  bool pad_input = true;  
+  nnet3::NnetOnlineComputer computer(am_nnet_.GetNnet(), pad_input);
   
   // we declare the following as CuVector just to enable GPU support, but
   // we expect this code to be run on CPU in the normal case.
